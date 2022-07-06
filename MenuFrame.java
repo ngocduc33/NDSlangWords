@@ -1,162 +1,272 @@
-package slang;
+import java.awt.EventQueue;
 
-import java.awt.Color;
-import java.awt.Container;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.GridLayout;
-import java.awt.Toolkit;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-
-import javax.swing.Box;
-import javax.swing.BoxLayout;
-import javax.swing.JButton;
 import javax.swing.JFrame;
+import java.awt.GridLayout;
+import javax.swing.BoxLayout;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+
+import java.awt.GridBagLayout;
+import java.awt.GridBagConstraints;
+import javax.swing.GroupLayout;
+import javax.swing.GroupLayout.Alignment;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import java.awt.Font;
+import javax.swing.SwingConstants;
+import javax.swing.LayoutStyle.ComponentPlacement;
+import javax.swing.JButton;
+import java.awt.event.ActionListener;
+import java.io.IOException;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map.Entry;
+import java.awt.event.ActionEvent;
+import javax.swing.JTextField;
+import javax.swing.JComboBox;
 import javax.swing.JPanel;
+import javax.swing.table.DefaultTableModel;
 
-public class MenuFrame extends JFrame implements ActionListener {
-	JButton b1, b2, b3, b4, b5, b6, b7, b8;
-	SlangWord slangWord;
 
-	MenuFrame() {
+public class MainFrame extends JFrame {
+	private JTextField txtKeyword;
+	private JTextField txtSlang;
+	private JTextField txtDefinition;
+	private JButton btnHistory;
+	private JButton btnSearch;
+	private JComboBox cbSearchType;
+	private JLabel lblRandom;
+	private JButton btnRandom;
+	private JLabel lblKeyword;
+	private JLabel lblSlang;
+	private JLabel lblDefinition;
+	private JButton btnAdd;
+	private JButton btnEdit;
+	private JLabel lblQuiz;
+	private JLabel lblQuizMode;
+	private JComboBox cbQuizMode;
+	
+	private String[] columnNames = new String [] {
+            "No.", "Slang", "Definition"};
+
+	private SlangWord slangWord;
+	private JTable tbSlangWord;
+	private JButton btnRestoreDefault;
+	private JButton btnDelete;
+	
+	/**
+	 * Launch the application.
+	 */
+	public static void main(String[] args) {
+		EventQueue.invokeLater(new Runnable() {
+			public void run() {
+				try {
+					MainFrame window = new MainFrame();
+					window.setVisible(true);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		});
+	}
+
+	/**
+	 * Create the application.
+	 * @throws IOException 
+	 */
+	public MainFrame() throws IOException {
+		initialize();
 		slangWord = SlangWord.getInstance();
-		// A Label
-		JLabel label = new JLabel("Slang Words");
-		label.setForeground(Color.green);
-		label.setFont(new Font("Gill Sans MT", Font.PLAIN, 35));
-		label.setAlignmentX(CENTER_ALIGNMENT);
-		// label.addMouseListener(this);
-		// A Grid
-		b1 = new JButton("1. List Slang Words");
-		b1.addActionListener(this);
-		b1.setFont(new Font("Gill Sans MT", Font.PLAIN, 14));
-		b1.setFocusable(false);
+		display();
+	}
 
-		b2 = new JButton("2. Find Slang word");
-		b2.addActionListener(this);
-		b2.setFont(new Font("Gill Sans MT", Font.PLAIN, 14));
-		b2.setFocusable(false);
-
-		b3 = new JButton("3. Add slang word");
-		b3.addActionListener(this);
-		b3.setFont(new Font("Gill Sans MT", Font.PLAIN, 14));
-		b3.setFocusable(false);
-
-		b4 = new JButton("4. Random Slang Words");
-		b4.addActionListener(this);
-		b4.setFont(new Font("Gill Sans MT", Font.PLAIN, 14));
-		b4.setFocusable(false);
-
-		b5 = new JButton("5. History");
-		b5.addActionListener(this);
-		b5.setFont(new Font("Gill Sans MT", Font.PLAIN, 14));
-		b5.setFocusable(false);
-
-		b6 = new JButton("6. Delete Slang Word");
-		b6.addActionListener(this);
-		b6.setFont(new Font("Gill Sans MT", Font.PLAIN, 14));
-		b6.setFocusable(false);
-
-		b7 = new JButton("7. Reset Slang Word");
-		b7.addActionListener(this);
-		b7.setFont(new Font("Gill Sans MT", Font.PLAIN, 14));
-		b7.setFocusable(false);
-
-		b8 = new JButton("8. Quiz");
-		b8.addActionListener(this);
-		b8.setFont(new Font("Gill Sans MT", Font.PLAIN, 14));
-		b8.setFocusable(false);
-
-		JPanel panelCenter = new JPanel();
-		// panelCenter.setBackground(Color.gray);
-		panelCenter.setLayout(new GridLayout(3, 3, 10, 10));
-		panelCenter.add(b1);
-		panelCenter.add(b2);
-		panelCenter.add(b3);
-		panelCenter.add(b4);
-		panelCenter.add(b5);
-		panelCenter.add(b6);
-		panelCenter.add(b7);
-		panelCenter.add(b8);
-
-		Dimension size2 = new Dimension(600, 500);
-		panelCenter.setMaximumSize(size2);
-		panelCenter.setPreferredSize(size2);
-		panelCenter.setMinimumSize(size2);
-		Container con = this.getContentPane();
-		con.setLayout(new BoxLayout(con, BoxLayout.Y_AXIS));
-		con.add(Box.createRigidArea(new Dimension(0, 10)));
-		con.add(label);
-		con.add(Box.createRigidArea(new Dimension(0, 30)));
-		con.add(panelCenter);
-
-		// Setting Frame
+	public void initialize() {
+		getContentPane().setFont(new Font("Tahoma", Font.PLAIN, 19));
+		JScrollPane scrollPane = new JScrollPane();
+		scrollPane.setBounds(724, 115, 502, 557);
+		
+		JLabel lblNewLabel = new JLabel("Slang Words Dictionary");
+		lblNewLabel.setBounds(0, 10, 1236, 41);
+		lblNewLabel.setHorizontalAlignment(SwingConstants.CENTER);
+		lblNewLabel.setFont(new Font("Tahoma", Font.PLAIN, 30));
+		
+		lblKeyword = new JLabel("Keyword:");
+		lblKeyword.setBounds(29, 116, 98, 23);
+		lblKeyword.setFont(new Font("Tahoma", Font.PLAIN, 19));
+		
+		lblRandom = new JLabel("#!@#: ...................................");
+		lblRandom.setBounds(337, 61, 508, 31);
+		lblRandom.setHorizontalAlignment(SwingConstants.CENTER);
+		lblRandom.setFont(new Font("Tahoma", Font.PLAIN, 19));
+		
+		btnRandom = new JButton("Random");
+		btnRandom.setBounds(855, 61, 131, 31);
+		btnRandom.setFont(new Font("Tahoma", Font.PLAIN, 19));
+		
+		cbSearchType = new JComboBox();
+		cbSearchType.setBounds(527, 115, 141, 31);
+		cbSearchType.setFont(new Font("Tahoma", Font.PLAIN, 19));
+		
+		btnSearch = new JButton("Search");
+		btnSearch.setBounds(137, 166, 131, 31);
+		btnSearch.setFont(new Font("Tahoma", Font.PLAIN, 19));
+		
+		btnHistory = new JButton("History");
+		btnHistory.setBounds(306, 166, 131, 31);
+		btnHistory.setFont(new Font("Tahoma", Font.PLAIN, 19));
+		
+		lblSlang = new JLabel("Slang:");
+		lblSlang.setBounds(29, 236, 98, 23);
+		lblSlang.setFont(new Font("Tahoma", Font.PLAIN, 19));
+		
+		txtKeyword = new JTextField();
+		txtKeyword.setBounds(137, 116, 368, 29);
+		txtKeyword.setFont(new Font("Tahoma", Font.PLAIN, 19));
+		txtKeyword.setColumns(10);
+		
+		lblDefinition = new JLabel("Definition:");
+		lblDefinition.setBounds(29, 280, 98, 23);
+		lblDefinition.setFont(new Font("Tahoma", Font.PLAIN, 19));
+		
+		btnAdd = new JButton("Add");
+		btnAdd.setBounds(137, 331, 131, 31);
+		btnAdd.setFont(new Font("Tahoma", Font.PLAIN, 19));
+		
+		btnDelete = new JButton("Delete");
+		btnDelete.setBounds(443, 331, 131, 31);
+		btnDelete.setFont(new Font("Tahoma", Font.PLAIN, 19));
+		
+		btnEdit = new JButton("Edit");
+		btnEdit.setBounds(286, 331, 131, 31);
+		btnEdit.setFont(new Font("Tahoma", Font.PLAIN, 19));
+		
+		txtSlang = new JTextField();
+		txtSlang.setBounds(137, 233, 531, 29);
+		txtSlang.setFont(new Font("Tahoma", Font.PLAIN, 19));
+		txtSlang.setColumns(10);	
+		
+		tbSlangWord = new JTable();
+		tbSlangWord.setFont(new Font("Tahoma", Font.PLAIN, 14));
+		
+		scrollPane.setViewportView(tbSlangWord);
+		getContentPane().setLayout(null);
+		getContentPane().add(btnHistory);
+		getContentPane().add(cbSearchType);
+		getContentPane().add(lblRandom);
+		getContentPane().add(btnAdd);
+		getContentPane().add(btnDelete);
+		getContentPane().add(btnEdit);
+		getContentPane().add(lblDefinition);
+		getContentPane().add(txtSlang);
+		getContentPane().add(lblKeyword);
+		getContentPane().add(txtKeyword);
+		getContentPane().add(lblSlang);
+		getContentPane().add(btnSearch);
+		getContentPane().add(scrollPane);
+		getContentPane().add(lblNewLabel);
+		getContentPane().add(btnRandom);
+		
+		txtDefinition = new JTextField();
+		txtDefinition.setFont(new Font("Tahoma", Font.PLAIN, 19));
+		txtDefinition.setColumns(10);
+		txtDefinition.setBounds(137, 277, 531, 29);
+		getContentPane().add(txtDefinition);
+		
+		JPanel panel = new JPanel();
+		panel.setBounds(29, 372, 639, 371);
+		getContentPane().add(panel);
+		panel.setLayout(null);
+		
+		lblQuiz = new JLabel("Quiz Game");
+		lblQuiz.setHorizontalAlignment(SwingConstants.CENTER);
+		lblQuiz.setFont(new Font("Tahoma", Font.BOLD, 20));
+		lblQuiz.setBounds(0, 10, 639, 23);
+		panel.add(lblQuiz);
+		
+		lblQuizMode = new JLabel("Mode:");
+		lblQuizMode.setFont(new Font("Tahoma", Font.PLAIN, 19));
+		lblQuizMode.setBounds(10, 47, 98, 23);
+		panel.add(lblQuizMode);
+		
+		cbQuizMode = new JComboBox();
+		cbQuizMode.setFont(new Font("Tahoma", Font.PLAIN, 19));
+		cbQuizMode.setBounds(111, 43, 141, 31);
+		panel.add(cbQuizMode);
+		
+		JLabel lblQuestionTitle = new JLabel("Question:");
+		lblQuestionTitle.setFont(new Font("Tahoma", Font.PLAIN, 19));
+		lblQuestionTitle.setBounds(10, 101, 98, 23);
+		panel.add(lblQuestionTitle);
+		
+		JLabel lblQuizQuestion = new JLabel("");
+		lblQuizQuestion.setFont(new Font("Tahoma", Font.PLAIN, 19));
+		lblQuizQuestion.setBounds(111, 101, 528, 23);
+		panel.add(lblQuizQuestion);
+		
+		JButton btnQuizAnswerA = new JButton("A.");
+		btnQuizAnswerA.setFont(new Font("Tahoma", Font.PLAIN, 19));
+		btnQuizAnswerA.setBounds(10, 149, 290, 56);
+		panel.add(btnQuizAnswerA);
+		
+		JButton btnQuizAnswerB = new JButton("B.");
+		btnQuizAnswerB.setFont(new Font("Tahoma", Font.PLAIN, 19));
+		btnQuizAnswerB.setBounds(339, 149, 290, 56);
+		panel.add(btnQuizAnswerB);
+		
+		JButton btnQuizAnswerC = new JButton("C.");
+		btnQuizAnswerC.setFont(new Font("Tahoma", Font.PLAIN, 19));
+		btnQuizAnswerC.setBounds(10, 241, 290, 56);
+		panel.add(btnQuizAnswerC);
+		
+		JButton btnQuizAnswerD = new JButton("D.");
+		btnQuizAnswerD.setFont(new Font("Tahoma", Font.PLAIN, 19));
+		btnQuizAnswerD.setBounds(339, 241, 290, 56);
+		panel.add(btnQuizAnswerD);
+		
+		JButton btnQuizStart = new JButton("Start");
+		btnQuizStart.setFont(new Font("Tahoma", Font.PLAIN, 19));
+		btnQuizStart.setBounds(64, 319, 131, 31);
+		panel.add(btnQuizStart);
+		
+		JButton btnQuizNextQuestion = new JButton("Next Question");
+		btnQuizNextQuestion.setFont(new Font("Tahoma", Font.PLAIN, 19));
+		btnQuizNextQuestion.setBounds(240, 319, 153, 31);
+		panel.add(btnQuizNextQuestion);
+		
+		JButton btnQuizStop = new JButton("Stop");
+		btnQuizStop.setFont(new Font("Tahoma", Font.PLAIN, 19));
+		btnQuizStop.setBounds(437, 319, 131, 31);
+		panel.add(btnQuizStop);
+		
+		btnRestoreDefault = new JButton("Restore Default");
+		btnRestoreDefault.setFont(new Font("Tahoma", Font.PLAIN, 19));
+		btnRestoreDefault.setBounds(871, 691, 197, 31);
+		getContentPane().add(btnRestoreDefault);
+		this.setBounds(100, 100, 1250, 800);
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		this.setTitle("Menu Window");
-		this.setVisible(true);
-		this.setSize(700, 700);
-		Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
-		this.setLocation(dim.width / 2 - this.getSize().width / 2, dim.height / 2 - this.getSize().height / 2);
-
 	}
-
-	@Override
-	public void actionPerformed(ActionEvent e) {
-		// TODO Auto-generated method stub
-		if (e.getSource() == b1) {
-			this.dispose();
-			try {
-				new ListSWFrame();
-			} catch (Exception e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
+	
+	public void display() throws IOException {
+		if (slangWord.readFile(FileNameUtils.DEFAULT)) {
+			DefaultTableModel model = new DefaultTableModel(null, columnNames);
+			int i = 0;
+			Object[] data;
+			for (Entry<String, List<String>> entry : slangWord.getData().entrySet()) {
+				List<String> definitions = entry.getValue();
+				for(String definition : definitions) {
+					data = new Object[] {
+							++i, entry.getKey(), definition 
+					};
+					model.addRow(data);
+				}
 			}
-		} else if (e.getSource() == b2) {
-			System.out.println("Change Actitity");
-			this.dispose();
-			try {
-				new FindSWFrame();
-			} catch (Exception e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			}
-
-		} else if (e.getSource() == b3) {
-			// Add a slang word
-			this.dispose();
-			new AddWordFrame();
-
-		} else if (e.getSource() == b4) {
-			this.dispose();
-			new RandomFrame();
-
-		} else if (e.getSource() == b5) {
-			this.dispose();
-			new HistoryFrame();
-
-		} else if (e.getSource() == b6) {
-			this.dispose();
-			try {
-				new DeleteFrame();
-			} catch (Exception e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			}
-		} else if (e.getSource() == b7) {
-			// default icon, custom title
-			int n = JOptionPane.showConfirmDialog(this, "Do you really want to reset Slang Word?", "An Inane Question",
-					JOptionPane.YES_NO_OPTION);
-			if (n == 0) {
-				slangWord.reset();
-				JOptionPane.showMessageDialog(this, "Reset success.");
-			}
-		} else if (e.getSource() == b8) {
-			this.dispose();
-			new QuizFrame();
+			tbSlangWord.setModel(model);
 		}
+	
+		tbSlangWord.getColumnModel().getColumn(0).setMaxWidth(50);
+		btnAdd.setEnabled(true);
+		btnEdit.setEnabled(false);
+		btnDelete.setEnabled(false);
 	}
-
+	
 }
