@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -23,10 +24,7 @@ import java.util.stream.Collectors;
 public class SlangWord {
 	
 	private Map<String, List<String>> slangWords = new LinkedHashMap<>();
-	
-//    private static final String DEFAULT_FILE_NAME = "slang.txt";
-//    private static final String ORIGINAL_FILE_NAME = "original-slang.txt";
-//    private static final String HISTORY_FILE_NAME = "history-slang.txt";
+
     private static final String NEW_LINE_SEPARATOR = "\n";
 	private static final String GRAVE_ACCENT_DELIMITER = "`";
 	private static final String PIPE_DELIMITER = "|";
@@ -34,7 +32,6 @@ public class SlangWord {
 	/*
 	 * Bill Pugh Singleton Implementation
 	 */
-	
 	private SlangWord() {
 		
 	}
@@ -46,12 +43,12 @@ public class SlangWord {
 	public static SlangWord getInstance() {
 		return SingletonHelper.INSTANCE;
 	}
-	
+
 	public Map<String, List<String>> getData() {
 		return slangWords;
 	}
 	
-	public Boolean writeFile(String fileName) throws IOException {
+	public void writeFile(String fileName) throws IOException {
         BufferedWriter bw = null;
         try {
             bw = new BufferedWriter(new FileWriter(fileName));
@@ -71,15 +68,13 @@ public class SlangWord {
 
         } catch (Exception e) {
             e.printStackTrace();
-            return false;
         } finally {
             bw.flush();
             bw.close();
         }
-        return true;
     }
 
-	public Boolean readFile(String fileName) throws IOException {
+	public void readFile(String fileName) throws IOException {
     	Path path = null;
         BufferedReader br = null;
         long startTime = System.currentTimeMillis();
@@ -95,7 +90,6 @@ public class SlangWord {
             }
         } catch(Exception e) {
             e.printStackTrace();
-            return false;
         } finally {
             br.close();
         }
@@ -103,7 +97,6 @@ public class SlangWord {
 		long endTime = System.currentTimeMillis();
 		long timeElapsed = endTime - startTime;
 		System.out.println("Execution time in milliseconds: " + timeElapsed);
-        return true;
     }
 	
 	public Boolean isExists(String slang) {
@@ -122,7 +115,7 @@ public class SlangWord {
 		writeFile(FileNameUtils.DEFAULT);
 	}
 	
-	public void update(String slang, String oldDefinition, String newDefinition) throws IOException {
+	public void update(String slang, String newDefinition, String oldDefinition) throws IOException {
 		Optional<Entry<String, List<String>>> entry = slangWords.entrySet().stream().filter(e -> e.getKey().equals(slang)).findFirst();
 		if(entry.isPresent()) {
 			int index = entry.get().getValue().indexOf(oldDefinition);
@@ -135,6 +128,9 @@ public class SlangWord {
 		Optional<Entry<String, List<String>>> entry = slangWords.entrySet().stream().filter(e -> e.getKey().equals(slang)).findFirst();
 		if(entry.isPresent()) {
 			entry.get().getValue().remove(definition);
+			if(entry.get().getValue().isEmpty()) {
+				slangWords.remove(entry.get().getKey());
+			}
 		}
 		writeFile(FileNameUtils.DEFAULT);
 	}
@@ -150,4 +146,28 @@ public class SlangWord {
 				.filter(entry -> entry.getValue().stream().allMatch(def -> def.contains(definition)))
 				.collect(Collectors.toMap(entry -> entry.getKey(), entry -> entry.getValue()));
 	}
+	
+	public Map<String, String> random() {
+		int randomSlangIndex = new Random().nextInt(slangWords.size());
+		List<String> slangs = slangWords.keySet().stream().collect(Collectors.toList());
+		String slang = slangs.get(randomSlangIndex);
+		
+		int randomDefinitionIndex = new Random().nextInt(slangWords.get(slang).size());
+		List<String> definitions = slangWords.get(slang);
+		String definition = definitions.get(randomDefinitionIndex);
+		
+		return Collections.singletonMap(slang, definition);
+	}
+	
+	public Map<String, String> quizGame() {
+		Map<String, String> result = new HashMap<>();
+		for(int i = 0; i < 4; ++i) {
+			Map<String, String> slangWord = random();
+			if(!result.keySet().containsAll(slangWord.keySet())) {
+				result.putAll(slangWord);
+			}
+		}
+		return result;
+	}
+	
 }
