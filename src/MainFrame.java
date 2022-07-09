@@ -26,11 +26,14 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Random;
+import java.util.Set;
 import java.awt.event.ActionEvent;
 import javax.swing.JTextField;
 import javax.swing.JComboBox;
 import javax.swing.JPanel;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.DefaultComboBoxModel;
 
 public class MainFrame extends JFrame {
 	private JTextField txtKeyword;
@@ -54,6 +57,7 @@ public class MainFrame extends JFrame {
             "No.", "Slang", "Definition"};
 
 	private SlangWord slangWord;
+	private String oldDefinition;
 	private JTable tbSlangWord;
 	private JButton btnRestoreDefault;
 	private JButton btnDelete;
@@ -82,8 +86,10 @@ public class MainFrame extends JFrame {
 	public MainFrame() throws IOException {
 		initialize();
 		initializeEvent();
-		slangWord = SlangWord.getInstance();		
-		displaySlangWord(FileNameUtils.DEFAULT);	
+		slangWord = SlangWord.getInstance();	
+		slangWord.readFile(FileNameUtils.DEFAULT);
+		displaySlangWord(slangWord.getData());
+		random();
 	}
 
 	public void initialize() {
@@ -105,11 +111,12 @@ public class MainFrame extends JFrame {
 		lblRandom.setHorizontalAlignment(SwingConstants.CENTER);
 		lblRandom.setFont(new Font("Tahoma", Font.PLAIN, 19));
 		
-		btnRandom = new JButton("Random");
+		btnRandom = new JButton("See More");
 		btnRandom.setBounds(855, 61, 131, 31);
 		btnRandom.setFont(new Font("Tahoma", Font.PLAIN, 19));
 		
 		cbSearchType = new JComboBox();
+		cbSearchType.setModel(new DefaultComboBoxModel(new String[] {"Slang", "Definition"}));
 		cbSearchType.setBounds(527, 115, 141, 31);
 		cbSearchType.setFont(new Font("Tahoma", Font.PLAIN, 19));
 		
@@ -135,15 +142,15 @@ public class MainFrame extends JFrame {
 		lblDefinition.setFont(new Font("Tahoma", Font.PLAIN, 19));
 		
 		btnAdd = new JButton("Add");
-		btnAdd.setBounds(137, 331, 105, 31);
+		btnAdd.setBounds(137, 331, 131, 31);
 		btnAdd.setFont(new Font("Tahoma", Font.PLAIN, 19));
 		
 		btnDelete = new JButton("Delete");
-		btnDelete.setBounds(420, 331, 105, 31);
+		btnDelete.setBounds(806, 691, 105, 31);
 		btnDelete.setFont(new Font("Tahoma", Font.PLAIN, 19));
 		
 		btnUpdate = new JButton("Update");
-		btnUpdate.setBounds(278, 331, 105, 31);
+		btnUpdate.setBounds(340, 331, 131, 31);
 		btnUpdate.setFont(new Font("Tahoma", Font.PLAIN, 19));
 		
 		txtSlang = new JTextField();
@@ -246,12 +253,12 @@ public class MainFrame extends JFrame {
 		
 		btnRestoreDefault = new JButton("Restore Default");
 		btnRestoreDefault.setFont(new Font("Tahoma", Font.PLAIN, 19));
-		btnRestoreDefault.setBounds(871, 691, 197, 31);
+		btnRestoreDefault.setBounds(955, 691, 197, 31);
 		getContentPane().add(btnRestoreDefault);
 		
 		btnClear = new JButton("Clear");
 		btnClear.setFont(new Font("Tahoma", Font.PLAIN, 19));
-		btnClear.setBounds(563, 331, 105, 31);
+		btnClear.setBounds(537, 331, 131, 31);
 		getContentPane().add(btnClear);
 		this.setBounds(100, 100, 1250, 800);
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -266,6 +273,7 @@ public class MainFrame extends JFrame {
 		});
 		
 		btnClear.addActionListener(e -> clearSlangWord());
+		
 		btnAdd.addActionListener(e -> {
 			try {
 				add();
@@ -273,29 +281,48 @@ public class MainFrame extends JFrame {
 				e1.printStackTrace();
 			}
 		});
+		
+		btnUpdate.addActionListener(e -> {
+			try {
+				update();
+			} catch (IOException e1) {
+				e1.printStackTrace();
+			}
+		});
+		
+		btnDelete.addActionListener(e -> {
+			try {
+				delete();
+			} catch (IOException e1) {
+				e1.printStackTrace();
+			}
+		});
+		
+		
+		btnSearch.addActionListener(e -> {
+			try {
+				search();
+			} catch (IOException e1) {
+				e1.printStackTrace();
+			}
+		});
 	}
 	
-	public void displaySlangWord(String fileName) throws IOException {
-		
-		if (slangWord.readFile(fileName)) {
-			DefaultTableModel model = new DefaultTableModel(null, columnNames);
-			int i = 0;
-			Object[] data;
-			for (Entry<String, List<String>> entry : slangWord.getData().entrySet()) {
-				List<String> definitions = entry.getValue();
-				for(String definition : definitions) {
-					data = new Object[] {
-							++i, entry.getKey(), definition 
-					};
-					model.addRow(data);
-				}
+	public void displaySlangWord(Map<String, List<String>> slangWords) throws IOException {
+		DefaultTableModel model = new DefaultTableModel(null, columnNames);
+		int i = 0;
+		Object[] data;
+		for (Entry<String, List<String>> entry : slangWords.entrySet()) {
+			List<String> definitions = entry.getValue();
+			for(String definition : definitions) {
+				data = new Object[] {
+						++i, entry.getKey(), definition 
+				};
+				model.addRow(data);
 			}
-			tbSlangWord.setModel(model);
 		}
+		tbSlangWord.setModel(model);
 		
-//		slangWord.findByDefinition("hap").entrySet().forEach(System.out::println);
-//		slangWord.update("$", "money", "moneyUpdated");
-		slangWord.delete("$", "moneyUpdated");
 		tbSlangWord.getColumnModel().getColumn(0).setMaxWidth(50);
 		btnAdd.setEnabled(true);
 		btnUpdate.setEnabled(false);
@@ -306,8 +333,10 @@ public class MainFrame extends JFrame {
 		int index = tbSlangWord.getSelectedRow();
 		txtSlang.setText(tbSlangWord.getValueAt(index, 1).toString());
 		txtDefinition.setText(tbSlangWord.getValueAt(index, 2).toString());
-
-		btnAdd.setEnabled(false);
+		oldDefinition = tbSlangWord.getValueAt(index, 2).toString();
+		
+		txtSlang.setEnabled(false);
+		btnAdd.setEnabled(false);		
 		btnUpdate.setEnabled(true);
 		btnDelete.setEnabled(true);
 	}
@@ -320,13 +349,18 @@ public class MainFrame extends JFrame {
 		btnDelete.setEnabled(false);
 	}
 	
+	public void random() {
+		Map.Entry<String, String> result = slangWord.random().entrySet().iterator().next();
+		lblRandom.setText(result.getKey() + ": " + result.getValue());
+	}
+	
 	public boolean validateSlangWord() {
 		return "".equals(txtSlang.getText().trim()) || "".equals(txtDefinition.getText().trim());
 	}
 	
 	public void add() throws IOException {
 		if(validateSlangWord()) {
-			JOptionPane.showMessageDialog(this, "Slang word or definition can't be blank", "Notification", JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(this, "Slang or definition can't be blank", "Notification", JOptionPane.ERROR_MESSAGE);
 		} else {
 			String slang = txtSlang.getText();
 			String definition = txtDefinition.getText();
@@ -347,7 +381,50 @@ public class MainFrame extends JFrame {
 			
 			JOptionPane.showMessageDialog(this, "Add Successfully", "Notification", JOptionPane.INFORMATION_MESSAGE);
 			clearSlangWord();
-			displaySlangWord(FileNameUtils.DEFAULT);
+			displaySlangWord(slangWord.getData());
+		}
+	}
+	
+	public void update() throws IOException {
+		if(validateSlangWord()) {
+			JOptionPane.showMessageDialog(this, "Definition can't be blank", "Notification", JOptionPane.ERROR_MESSAGE);
+		} else {
+			String slang = txtSlang.getText();
+			String definition = txtDefinition.getText();
+			slangWord.update(slang, definition, oldDefinition);	
+			
+			JOptionPane.showMessageDialog(this, "Update Successfully", "Notification", JOptionPane.INFORMATION_MESSAGE);
+			clearSlangWord();
+			displaySlangWord(slangWord.getData());
+		}
+	}
+	
+	public void delete() throws IOException {
+		int index = tbSlangWord.getSelectedRow();
+		String slang = tbSlangWord.getValueAt(index, 1).toString();
+		String definition = tbSlangWord.getValueAt(index, 2).toString();
+		slangWord.delete(slang, definition);	
+		
+		JOptionPane.showMessageDialog(this, "Delete Successfully", "Notification", JOptionPane.INFORMATION_MESSAGE);
+		clearSlangWord();
+		displaySlangWord(slangWord.getData());
+		btnDelete.setEnabled(false);
+	}
+	
+	public void search() throws IOException {
+		String keyword = txtKeyword.getText();
+		if("".equals(keyword.trim())) {
+			displaySlangWord(slangWord.getData());
+		} else {
+			Map<String, List<String>> result = new LinkedHashMap<>();
+			String searchType = cbSearchType.getSelectedItem().toString();
+			
+			if ("Slang".equals(searchType)) {
+				result = slangWord.findBySlang(keyword);
+			} else if ("Definition".equals(searchType)) {
+				result = slangWord.findByDefinition(keyword);
+			}
+			displaySlangWord(result);
 		}
 	}
 }
