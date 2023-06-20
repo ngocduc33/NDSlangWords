@@ -21,6 +21,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 
+
 public class SlangWord {
 	
 	private Map<String, List<String>> slangWords = new LinkedHashMap<>();
