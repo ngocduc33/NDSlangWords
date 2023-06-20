@@ -7,6 +7,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -19,7 +20,6 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
-
 
 
 public class SlangWord {
@@ -66,7 +66,6 @@ public class SlangWord {
             	defnitionBuilder.append(NEW_LINE_SEPARATOR);
             	bw.append(defnitionBuilder);
             }
-
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
@@ -99,6 +98,31 @@ public class SlangWord {
 		long timeElapsed = endTime - startTime;
 		System.out.println("Execution time in milliseconds: " + timeElapsed);
     }
+	
+	public void saveHistoryToFile( Map<String, List<String>> slangWordsHistory) throws IOException {
+		BufferedWriter bw = null;
+        try {
+            bw = new BufferedWriter(new FileWriter(FileNameUtils.HISTORY));
+            for (Entry<String, List<String>> entry : slangWordsHistory.entrySet()) {       
+            	bw.append(entry.getKey()).append(GRAVE_ACCENT_DELIMITER); // add slang 
+            	
+            	// add definition
+            	List<String> definitions = entry.getValue();
+            	StringBuilder defnitionBuilder = new StringBuilder();
+            	for(String definition : definitions) {
+            		defnitionBuilder.append(definition).append(PIPE_DELIMITER);
+				}
+            	defnitionBuilder.deleteCharAt(defnitionBuilder.length() - 1);
+            	defnitionBuilder.append(NEW_LINE_SEPARATOR);
+            	bw.append(defnitionBuilder);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            bw.flush();
+            bw.close();
+        }
+	}
 	
 	public Boolean isExists(String slang) {
 		return slangWords.keySet().stream().anyMatch(s -> s.equals(slang));
@@ -136,16 +160,21 @@ public class SlangWord {
 		writeFile(FileNameUtils.DEFAULT);
 	}
 	
-	public Map<String, List<String>> findBySlang(String slang) {
-		return slangWords.entrySet().stream()
-				.filter(entry -> entry.getKey().contains(slang))
+	public Map<String, List<String>> findBySlang(String slang) throws IOException {
+		Map<String, List<String>> result = slangWords.entrySet().stream()
+				.filter(entry -> entry.getKey().toLowerCase().contains(slang.toLowerCase()))
 				.collect(Collectors.toMap(entry -> entry.getKey(), entry -> entry.getValue()));
+		saveHistoryToFile(result);
+		return result;
 	}
 	
-	public Map<String, List<String>> findByDefinition(String definition) {
-		return slangWords.entrySet().stream()
-				.filter(entry -> entry.getValue().stream().allMatch(def -> def.contains(definition)))
+	public Map<String, List<String>> findByDefinition(String definition) throws IOException {
+		Map<String, List<String>> result = slangWords.entrySet().stream()
+				.filter(entry -> entry.getValue().stream()
+						.allMatch(def -> def.toLowerCase().contains(definition.toLowerCase())))
 				.collect(Collectors.toMap(entry -> entry.getKey(), entry -> entry.getValue()));
+		saveHistoryToFile(result);
+		return result;
 	}
 	
 	public Map<String, String> random() {
@@ -160,14 +189,30 @@ public class SlangWord {
 		return Collections.singletonMap(slang, definition);
 	}
 	
-	public Map<String, String> quizGame() {
-		Map<String, String> result = new HashMap<>();
-		for(int i = 0; i < 4; ++i) {
+	public Map<String, List<String>> quizGame() {
+		Map<String, List<String>> result = new HashMap<>();
+		
+		Map<String, String> question = random();
+		result.put("question", Arrays.asList(question.entrySet().iterator().next().getKey()));
+		result.put("correctAnswer", Arrays.asList(question.entrySet().iterator().next().getValue()));
+		result.put("answers",  new ArrayList<>());
+		
+		int randomIndex = new Random().nextInt(4);
+		String[] answers = new String[4];
+		answers[randomIndex] = question.entrySet().iterator().next().getValue();
+		for(int i = 0; i < 3; ++i) {
 			Map<String, String> slangWord = random();
-			if(!result.keySet().containsAll(slangWord.keySet())) {
-				result.putAll(slangWord);
+			if(!result.get("question").containsAll(slangWord.values())) {
+				while(true) {
+					randomIndex = new Random().nextInt(4);
+					if (answers[randomIndex] == null ) {
+						answers[randomIndex] = slangWord.values().iterator().next();
+						break;
+					}
+				}
 			}
 		}
+		result.get("answers").addAll(Arrays.asList(answers));
 		return result;
 	}
 	
