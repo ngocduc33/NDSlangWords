@@ -3,5 +3,3 @@ public enum AddType {
 	DUPLICATE,
 	OVERRIDE
 }
-Footer
-© 2022 GitHub, Inc.
